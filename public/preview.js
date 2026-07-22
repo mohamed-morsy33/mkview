@@ -2,6 +2,7 @@
   'use strict';
 
   const editToggle = document.getElementById('edit-toggle');
+  const saveBtn = document.getElementById('save-btn');
   const previewView = document.getElementById('preview-view');
   const editorView = document.getElementById('editor-view');
   const editor = document.getElementById('editor');
@@ -37,6 +38,7 @@
     editorView.style.display = 'grid';
     editToggle.querySelector('span').textContent = 'Preview';
     editToggle.classList.add('header-btn--active');
+    saveBtn.style.display = '';
     updatePreview();
     editor.focus();
   }
@@ -47,6 +49,7 @@
     previewView.style.display = '';
     editToggle.querySelector('span').textContent = 'Edit';
     editToggle.classList.remove('header-btn--active');
+    saveBtn.style.display = 'none';
   }
 
   editToggle.addEventListener('click', function () {
@@ -55,6 +58,10 @@
     } else {
       enterEditMode();
     }
+  });
+
+  saveBtn.addEventListener('click', function () {
+    saveFile();
   });
 
   editor.addEventListener('input', updatePreview);
