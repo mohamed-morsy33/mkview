@@ -1,2 +1,18 @@
-# mkview
-A simple markdown viewer for Dropbox.
+<div align="center">
+  <img src="./assets/mkview_banner.png" alt="Project Logo" width="512" height="1028">
+  <h1>Mkview</h1>
+</div>
+
+<div align="center">
+
+![License](https://img.shields.io/github/license/mohamed-morsy33/mkview)
+![Last Commit](https://img.shields.io/github/last-commit/mohamed-morsy33/mkview)
+![Issues](https://img.shields.io/github/issues/mohamed-morsy33/mkview)
+![Stars](https://img.shields.io/github/stars/mohamed-morsy33/mkview?style=social)
+
+</div>
+
+<div align="center">
+  <video src="./assets/demo_vid.mp4" width="720" height="auto" controls muted autoplay loop></video>
+  <h1>Demo</h1>
+</div>
