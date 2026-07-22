@@ -18,5 +18,33 @@
 </div>
 
 
+# Features
 
+### Markdown Preview
 
+- Full GitHub-flavored Markdown rendering (headings, lists, tables, blockquotes, code blocks, task lists)
+- Server-side rendering with markdown-it + DOMPurify sanitization
+- Premium typography with Inter and JetBrains Mono fonts
+- Responsive design — works on desktop and mobile
+- Print-friendly layout
+- Custom scrollbar and smooth animations
+
+### Live Editor
+- Side-by-side markdown editor with real-time preview
+- Split pane layout (stacked on mobile)
+- Toggle between preview and edit mode via button or Ctrl+E / Cmd+E
+Save to Dropbox
+- Save edits directly back to Dropbox via API
+- One-click Save button in the header
+- Keyboard shortcut: Ctrl+S / Cmd+S
+- Toast notifications for save status (saving, success, error)
+
+### Authentication
+- Dropbox OAuth 2.0 with offline token support
+- Seamless auth flow — redirects back to the file after login
+- Session-based token storage
+
+### Dropbox Extension
+- Opens from Dropbox's "Open with" menu
+- Passes file context automatically
+- Supports .md, .markdown, and .txt files
