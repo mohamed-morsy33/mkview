@@ -217,6 +217,6 @@ function renderError(title, message) {
 
 app.use('/static', express.static(`${__dirname}/public`));
 
-app.listen(PORT, '127.0.0.1', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Markdown preview extension running on http://localhost:${PORT}`);
 });
