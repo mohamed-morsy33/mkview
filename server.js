@@ -28,10 +28,6 @@ app.use(
   })
 );
 
-// ---------------------------------------------------------------------------
-// 1. OAuth: kick off the flow from your own site (Dropbox requires this —
-//    users can't start auth from inside dropbox.com).
-// ---------------------------------------------------------------------------
 app.get('/auth/login', async (req, res) => {
   try {
     const dbx = new Dropbox({
@@ -41,9 +37,9 @@ app.get('/auth/login', async (req, res) => {
     });
     const authUrl = await dbx.auth.getAuthenticationUrl(
       DROPBOX_REDIRECT_URI,
-      req.query.return_to || undefined, // state: carry return URL through the OAuth flow
+      req.query.return_to || undefined, 
       'code',
-      'offline', // token_access_type: get a refresh token, not just a short-lived one
+      'offline', 
       undefined,
       undefined,
       false
@@ -55,10 +51,6 @@ app.get('/auth/login', async (req, res) => {
   }
 });
 
-// ---------------------------------------------------------------------------
-// 2. OAuth callback: exchange the code for tokens, stash in session.
-//    In production, persist refresh_token per-user in a real DB instead.
-// ---------------------------------------------------------------------------
 app.get('/auth/callback', async (req, res) => {
   const { code, state } = req.query;
   if (!code) return res.status(400).send(renderError('Missing Code', 'The OAuth authorization code was not provided.'));
@@ -73,7 +65,6 @@ app.get('/auth/callback', async (req, res) => {
       DROPBOX_REDIRECT_URI,
       code
     );
-    // tokenResponse.result contains access_token, refresh_token, expires_in
     req.session.dropboxTokens = tokenResponse.result;
 
     // state carries the original /view URL from the auth/login step
@@ -91,17 +82,6 @@ app.get('/auth/success', (req, res) => {
   );
 });
 
-// ---------------------------------------------------------------------------
-// 3. The Extension entry point.
-//
-//    IMPORTANT — verify this against your App Console config and the current
-//    Extensions Guide before relying on it: Dropbox redirects the user's
-//    browser to whatever "action URL" you registered for the extension,
-//    passing file context as query params. The exact param names have
-//    changed across Dropbox's docs revisions, so this handler defensively
-//    checks a few likely shapes. Log req.query once against a real click to
-//    confirm the actual shape for your app, then trim this down.
-// ---------------------------------------------------------------------------
 app.get('/view', async (req, res) => {
   console.log('Extension launch query params:', req.query);
 
@@ -118,7 +98,6 @@ app.get('/view', async (req, res) => {
 
   const tokens = req.session.dropboxTokens;
   if (!tokens) {
-    // Bounce through auth, then return here with the same file reference.
     const returnTo = encodeURIComponent(req.originalUrl);
     return res.redirect(`/auth/login?return_to=${returnTo}`);
   }
