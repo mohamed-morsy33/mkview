@@ -16,7 +16,7 @@ const {
   DROPBOX_APP_SECRET,
   DROPBOX_REDIRECT_URI,
   SESSION_SECRET,
-  PORT = 3000,
+  PORT = 8080,
 } = process.env;
 
 app.use(
