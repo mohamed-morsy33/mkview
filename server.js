@@ -19,6 +19,7 @@ const {
   PORT = 8080,
 } = process.env;
 
+app.use(express.json());
 app.use(
   session({
     secret: SESSION_SECRET,
@@ -82,6 +83,34 @@ app.get('/auth/success', (req, res) => {
   );
 });
 
+// ---------------------------------------------------------------------------
+// 4. Save edited markdown back to Dropbox.
+// ---------------------------------------------------------------------------
+app.post('/save', async (req, res) => {
+  const { path: filePath, content } = req.body;
+  if (!filePath || content === undefined) {
+    return res.status(400).json({ error: 'Missing file path or content.' });
+  }
+
+  const tokens = req.session.dropboxTokens;
+  if (!tokens) {
+    return res.status(401).json({ error: 'Not authenticated.' });
+  }
+
+  try {
+    const dbx = new Dropbox({ accessToken: tokens.access_token, fetch });
+    await dbx.filesUpload({
+      path: filePath,
+      contents: Buffer.from(content, 'utf-8'),
+      mode: { '.tag': 'overwrite' },
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Failed to save file:', err);
+    res.status(500).json({ error: 'Could not save the file to Dropbox.' });
+  }
+});
+
 app.get('/view', async (req, res) => {
   console.log('Extension launch query params:', req.query);
 
@@ -119,7 +148,7 @@ app.get('/view', async (req, res) => {
     const rawHtml = md.render(content);
     const safeHtml = DOMPurify.sanitize(rawHtml);
 
-    res.send(renderPage(meta.result.name, safeHtml));
+    res.send(renderPage(meta.result.name, safeHtml, path, content));
   } catch (err) {
     console.error('Failed to load file from Dropbox:', err);
     res.status(500).send(renderError('Load Failed', 'Could not load the file from Dropbox. Please check your connection and try again.'));
@@ -135,7 +164,15 @@ function safeParseFileId(context) {
   }
 }
 
-function renderPage(title, bodyHtml) {
+function renderPage(title, bodyHtml, filePath, rawContent) {
+  const escapedContent = rawContent
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$');
+  const escapedPath = filePath
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$');
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -151,13 +188,42 @@ function renderPage(title, bodyHtml) {
 <body>
   <header class="preview-header">
     <span class="filename">${escapeHtml(title)}</span>
+    <div class="header-actions">
+      <button id="edit-toggle" class="header-btn" title="Edit markdown">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>Edit</span>
+      </button>
+    </div>
   </header>
-  <main class="markdown-body">
+
+  <div id="preview-view" class="markdown-body">
     ${bodyHtml}
-  </main>
+  </div>
+
+  <div id="editor-view" class="editor-container" style="display:none;">
+    <div class="editor-pane">
+      <div class="editor-pane-header">Markdown</div>
+      <textarea id="editor" spellcheck="false">${escapeHtml(rawContent)}</textarea>
+    </div>
+    <div class="editor-pane">
+      <div class="editor-pane-header">Preview</div>
+      <div id="editor-preview" class="markdown-body editor-preview-content"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
   <footer class="preview-footer">
     Markdown Preview &middot; Dropbox Extension
   </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it@14/dist/markdown-it.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script src="/static/preview.js"></script>
+  <script>
+    window.__INITIAL_CONTENT__ = \`${escapedContent}\`;
+    window.__FILE_PATH__ = \`${escapedPath}\`;
+  </script>
 </body>
 </html>`;
 }
