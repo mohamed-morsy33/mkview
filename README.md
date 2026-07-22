@@ -13,6 +13,10 @@
 </div>
 
 <div align="center">
-  <video src="./assets/demo_vid.mp4" width="720" height="auto" controls muted autoplay loop></video>
+  <video src="https://github.com/user-attachments/assets/ac7c0d21-d684-4fae-b863-a3e1c025508a" width="720" height="auto" controls muted autoplay loop></video>
   <h1>Demo</h1>
 </div>
+
+
+
+
