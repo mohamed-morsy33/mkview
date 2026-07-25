@@ -23,11 +23,9 @@
 ### Markdown Preview
 
 - Full GitHub-flavored Markdown rendering (headings, lists, tables, blockquotes, code blocks, task lists)
-- Server-side rendering with markdown-it + DOMPurify sanitization
-- Premium typography with Inter and JetBrains Mono fonts
+- Server-side rendering with markdown-it
 - Responsive design — works on desktop and mobile
 - Print-friendly layout
-- Custom scrollbar and smooth animations
 
 ### Live Editor
 - Side-by-side markdown editor with real-time preview
