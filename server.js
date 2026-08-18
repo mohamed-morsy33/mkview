@@ -19,13 +19,14 @@ const {
   PORT = 8080,
 } = process.env;
 
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(
   session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: 'lax', secure: true },
+    cookie: { httpOnly: true, sameSite: 'lax', secure: 'auto' },
   })
 );
 
