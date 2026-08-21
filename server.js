@@ -37,11 +37,13 @@ app.get('/auth/login', async (req, res) => {
       clientSecret: DROPBOX_APP_SECRET,
       fetch,
     });
+    req.session.returnTo = req.query.return_to || '/view';
+
     const authUrl = await dbx.auth.getAuthenticationUrl(
       DROPBOX_REDIRECT_URI,
-      req.query.return_to || undefined, 
+      undefined,
       'code',
-      'offline', 
+      'offline',
       undefined,
       undefined,
       false
@@ -49,13 +51,13 @@ app.get('/auth/login', async (req, res) => {
     res.redirect(authUrl);
   } catch (err) {
     console.error('Failed to build authentication URL:', err);
-    res.status(500).send(renderError('Login Failed', 'Could not start the Dropbox login flow. Please try again.'));
+    res.status(500).send(renderError('Login Failed', 'Could not start the Dropbox login flow. Please try again.', req.query.return_to));
   }
 });
 
 app.get('/auth/callback', async (req, res) => {
-  const { code, state } = req.query;
-  if (!code) return res.status(400).send(renderError('Missing Code', 'The OAuth authorization code was not provided.'));
+  const { code } = req.query;
+  if (!code) return res.status(400).send(renderError('Missing Code', 'The OAuth authorization code was not provided.', req.session.returnTo));
 
   try {
     const dbx = new Dropbox({
@@ -69,12 +71,12 @@ app.get('/auth/callback', async (req, res) => {
     );
     req.session.dropboxTokens = tokenResponse.result;
 
-    // state carries the original /view URL from the auth/login step
-    const returnTo = state || '/view';
-    res.redirect(returnTo);
+    const returnTo = req.session.returnTo || '/view';
+    delete req.session.returnTo;
+    res.redirect(returnTo.startsWith('/') ? returnTo : '/view');
   } catch (err) {
     console.error('OAuth exchange failed:', err);
-    res.status(500).send(renderError('Authorization Failed', 'The authorization process encountered an error. Please try again.'));
+    res.status(500).send(renderError('Authorization Failed', 'The authorization process encountered an error. Please try again.', req.session.returnTo));
   }
 });
 
@@ -140,7 +142,7 @@ app.get('/view', async (req, res) => {
     const path = meta.result.path_display;
 
     if (!/\.(md|markdown|txt)$/i.test(path)) {
-      return res.status(415).send(renderError('Unsupported File', 'This extension only previews Markdown files (.md, .markdown, .txt).'));
+      return res.status(415).send(renderError('Unsupported File', 'This extension only previews Markdown files (.md, .markdown, .txt).', req.originalUrl));
     }
 
     const download = await dbx.filesDownload({ path });
@@ -152,7 +154,7 @@ app.get('/view', async (req, res) => {
     res.send(renderPage(meta.result.name, safeHtml, path, content));
   } catch (err) {
     console.error('Failed to load file from Dropbox:', err);
-    res.status(500).send(renderError('Load Failed', 'Could not load the file from Dropbox. Please check your connection and try again.'));
+    res.status(500).send(renderError('Load Failed', 'Could not load the file from Dropbox. Please check your connection and try again.', req.originalUrl));
   }
 });
 
@@ -238,10 +240,17 @@ function escapeHtml(str) {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-function renderError(title, message) {
+function renderError(title, message, retryUrl) {
+  const retryLink =
+    typeof retryUrl === 'string' &&
+    retryUrl.startsWith('/') &&
+    !retryUrl.startsWith('//')
+      ? escapeHtml(retryUrl)
+      : '/view';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -260,7 +269,7 @@ function renderError(title, message) {
       <div class="error-icon">!</div>
       <h1>${escapeHtml(title)}</h1>
       <p>${escapeHtml(message)}</p>
-      <a href="/view">Try Again</a>
+      <a href="${retryLink}">Try Again</a>
     </div>
   </div>
 </body>
